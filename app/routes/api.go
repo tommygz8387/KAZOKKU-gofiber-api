@@ -10,7 +10,8 @@ import (
 func SetupRoutes(app *fiber.App) {
     user := app.Group("/user")
     // Get All User
-    user.Get("/list", controllers.UserController)
+    user.Get("/list", controllers.GetUserList)
+    user.Get("/:id", controllers.GetUserById)
 
 
     // Registration route

@@ -35,7 +35,7 @@ func MaskCreditCardNumber(cardNumber string) string {
 	return cardNumber
 }
 
-func UserController(c *fiber.Ctx) error {
+func GetUserList(c *fiber.Ctx) error {
 	var users []models.User
 
 	// Fetch all users with their relations
@@ -73,5 +73,40 @@ func UserController(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"count": len(users),
 		"rows": userResponses,
+	})
+}
+
+func GetUserById(c *fiber.Ctx) error {
+	var user models.User
+	id := c.Params("id")
+	result := database.DB.Preload(clause.Associations).Omit("password", "CreatedAt", "UpdatedAt", "DeletedAt").First(&user, id)
+	if result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": result.Error,
+		})
+	}
+	
+	// Prepare the user response
+	userResponse := UserResponse{
+		UserID:  user.ID,
+		Email:   user.Email,
+		Address: user.Address,
+		Photos:  make(map[int]string),
+		CreditCard: CreditCardInfo{
+			Type:    user.CreditCard.Type,
+			Name:    user.CreditCard.Name,
+			Number:  MaskCreditCardNumber(user.CreditCard.Number),
+			Expired: user.CreditCard.Expired,
+			Cvv:     user.CreditCard.Cvv,
+		},
+	}
+
+	for i, photo := range user.Photos {
+		userResponse.Photos[i+1] = photo.Filename
+	}
+
+	// Return the user response
+	return c.JSON(fiber.Map{
+		"user": userResponse,
 	})
 }

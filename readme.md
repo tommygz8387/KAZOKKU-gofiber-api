@@ -48,3 +48,7 @@ Aplikasi ini adalah contoh sederhana dari aplikasi web menggunakan framework Go 
 
 3. **Ambil Pengguna Berdasarkan ID**
     - Ambil pengguna berdasarkan ID dengan mengirimkan GET request ke `http://localhost:3000/user/:id`, mengganti `:id` dengan ID pengguna yang diinginkan.
+
+## NB
+
+Dokumentasi Hitpoin API bisa dilihat di file api.rest dan bisa dijalankan dengan menggunakan ekstensi rest client.
