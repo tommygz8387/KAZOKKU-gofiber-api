@@ -35,7 +35,7 @@ func MaskCreditCardNumber(cardNumber string) string {
 	return cardNumber
 }
 
-func GetUserList(c *fiber.Ctx) error {
+func UserController(c *fiber.Ctx) error {
 	var users []models.User
 
 	// Fetch all users with their relations

@@ -2,7 +2,6 @@ package routes
 
 import (
 	"v1/app/controllers"
-	auth "v1/app/controllers/auth"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -11,12 +10,11 @@ import (
 func SetupRoutes(app *fiber.App) {
     user := app.Group("/user")
     // Get All User
-    user.Get("/list", controllers.GetUserList)
-    // user.Get("/:id", controllers.GetUserById)
+    user.Get("/list", controllers.UserController)
 
 
     // Registration route
-    user.Post("/register", auth.Register)
+    user.Post("/register", controllers.Register)
 
 	
 

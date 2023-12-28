@@ -1,4 +1,4 @@
-package auth
+package controllers
 
 import (
 	"v1/app/database"
