@@ -1,9 +1,9 @@
 package database
 
 import (
-	"fmt"
 	"log"
 	"os"
+	"v1/app/models"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -25,10 +25,9 @@ func InitDB() (*gorm.DB, error) {
     dbPassword := os.Getenv("DB_PASSWORD")
     dbHost := os.Getenv("DB_HOST")
     dbName := os.Getenv("DB_NAME")
-    dbPort := os.Getenv("DB_PORT")
 
     // Construct the database DSN
-    dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPassword, dbHost, dbPort, dbName)
+    dsn := dbUser + ":" + dbPassword + "@tcp(" + dbHost + ":3306)/" + dbName + "?parseTime=true"
 
     // Initialize database connection
     db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
@@ -41,9 +40,12 @@ func InitDB() (*gorm.DB, error) {
 	// Running Log
     log.Println("Connected")
 	db.Logger = logger.Default.LogMode(logger.Info)
+
 	// Auto Migrate
-	// log.Println("Running AutoMigrations")
-	// db.AutoMigrate(&models.User{},&models.UserPhoto{},&models.UserCreditCard{})
+	if os.Getenv("DB_AUTO_MIGRATE") == "true" {
+		log.Println("Running AutoMigrations")
+		db.AutoMigrate(&models.User{},&models.UserPhoto{},&models.UserCreditCard{})
+	}
 
 	// Store the database connection globally
 	DB = db

@@ -2,20 +2,21 @@ package routes
 
 import (
 	"v1/app/controllers"
+	auth "v1/app/controllers/auth"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 // SetupAuthRoutes initializes authentication routes
 func SetupRoutes(app *fiber.App) {
-    auth := app.Group("/user")
-
+    user := app.Group("/user")
     // Get All User
-    auth.Get("/all", controllers.UserController)
+    user.Get("/list", controllers.GetUserList)
+    // user.Get("/:id", controllers.GetUserById)
 
 
     // Registration route
-    auth.Post("/register", controllers.RegisterController)
+    user.Post("/register", auth.Register)
 
 	
 

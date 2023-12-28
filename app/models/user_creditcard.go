@@ -3,11 +3,12 @@ package models
 import "gorm.io/gorm"
 
 type UserCreditCard struct {
-	gorm.Model
-	UserID     uint
-	User       User   // Belongs To relationship
-	CardType   string   `gorm:"not null"`
-	CardNumber string   `gorm:"not null"`
-	CardName   string   `gorm:"not null"`
-	CardCvv    string   `gorm:"not null"`
+	gorm.Model `json:"-"`
+	UserID     uint		`json:"-"`
+	User       User   	`json:"-"` // Belongs To relationship
+	Type   string   `gorm:"not null"`
+	Number string   `gorm:"not null"`
+	Name   string   `gorm:"not null"`
+	Expired   string   `gorm:"not null"`
+	Cvv    string   `gorm:"not null"`
 }
