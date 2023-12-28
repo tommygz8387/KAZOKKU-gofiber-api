@@ -4,56 +4,74 @@ import (
 	"v1/app/database"
 	"v1/app/models"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Register Function handles user registration
+// RegisterRequest adalah struktur data untuk permintaan registrasi
+type RegisterRequest struct {
+	Name       string `json:"name" validate:"required"`
+	Email      string `json:"email" validate:"required,email"`
+	Password   string `json:"password" validate:"required,min=6"`
+	Address    string `json:"address" validate:"required"`
+	Photo      string `json:"photo" validate:"required"`
+	CardType   string `json:"card_type" validate:"required"`
+	CardNumber string `json:"card_number" validate:"required"`
+	CardName   string `json:"card_name" validate:"required"`
+	CardExpired string `json:"card_expired" validate:"required"`
+	CardCVV    string `json:"card_cvv" validate:"required"`
+}
+
+// RegisterController handles user registration
 func Register(c *fiber.Ctx) error {
-    // Parse request body
-    var user models.User
-    if err := c.BodyParser(&user); err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// Parse request body
+	var requestData RegisterRequest
+	if err := c.BodyParser(&requestData); err != nil {
+		return c.JSON(fiber.Map{
 			"message": err.Error(),
-        })
-    }
+		})
+	}
 
-    // Validate user data
-    if err := user.Validate(); err != nil {
-        var validationErrors []string
-        if verr, ok := err.(validator.ValidationErrors); ok {
-            for _, fieldError := range verr {
-                validationErrors = append(validationErrors, fieldError.Error())
-            }
-        }
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "message": "Validation failed",
-            "errors":  validationErrors,
-        })
-    }
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestData.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"message": "Failed to hash password",
+		})
+	}
 
-    // Hash the password
-    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-    if err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "message": "Failed to hash password",
-        })
-    }
+	// Create a new user
+	newUser := models.User{
+		Name: requestData.Name,
+		Email:    requestData.Email,
+		Password: string(hashedPassword),
+		Address:  requestData.Address,
+	}
+	database.DB.Create(&newUser)
 
-    // Update user password with hashed password
-    user.Password = string(hashedPassword)
+	// Attach the provided photo to the user
+	photo := models.UserPhoto{
+		UserID:   newUser.ID,
+		Filename: requestData.Photo,
+	}
+	database.DB.Create(&photo)
 
-    // Save the user to the database
-    result := database.DB.Create(&user)
-    if result.Error != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "message": result.Error.Error(),
-        })
-    }
+	// Attach the provided credit card to the user
+	creditCard := models.UserCreditCard{
+		UserID:  newUser.ID,
+		Type:    requestData.CardType,
+		Name:    requestData.CardName,
+		Number:  requestData.CardNumber,
+		Expired: requestData.CardExpired,
+		Cvv:     requestData.CardCVV,
+	}
+	database.DB.Create(&creditCard)
 
-    return c.JSON(fiber.Map{
-        "message": "User registered successfully",
-        "user_id":    user.ID,
-    })
+	// Clear sensitive information before sending the response
+	newUser.Password = ""
+
+	return c.JSON(fiber.Map{
+		"message": "User registered successfully",
+		"user_id": newUser.ID,
+	})
 }

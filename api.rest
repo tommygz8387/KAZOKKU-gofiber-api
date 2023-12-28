@@ -8,5 +8,11 @@ Content-Type: application/json
   "name": "newuser5",
   "email": "newuser5@example.com",
   "password": "password",
-  "address": "disini3"
+  "address": "disini3",
+  "photo": "ini",
+  "card_type":"visa",
+  "card_number":"12312313",
+  "card_name":"bris",
+  "card_expired":"-",
+  "card_cvv":"211"
 }
