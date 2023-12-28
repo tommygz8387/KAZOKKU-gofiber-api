@@ -1,5 +1,5 @@
 ### Get User List
-GET http://localhost:3000/user/list
+GET http://localhost:3000/user/list?sb=name&ob=ASC&lt=3
 
 ### Get User By Id
 GET http://localhost:3000/user/1

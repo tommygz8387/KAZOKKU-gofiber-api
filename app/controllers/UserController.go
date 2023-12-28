@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"strconv"
 	"v1/app/database"
 	"v1/app/models"
 
@@ -51,19 +53,58 @@ func MaskCreditCardNumber(cardNumber string) string {
 
 func GetUserList(c *fiber.Ctx) error {
 	var users []models.User
+	// Define default values for sorting
+	const defaultSortBy = "id"
+	const defaultSortOrder = "ASC"
 
-	// Fetch all users with their relations
-	result := database.DB.Preload(clause.Associations).Omit("password", "CreatedAt", "UpdatedAt", "DeletedAt").Find(&users)
-	if result.Error != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": result.Error,
+	// Read query string parameters for sorting, use defaults if not provided
+	sortByQuery := c.Query("sb", defaultSortBy)
+	sortOrderQuery := c.Query("ob", defaultSortOrder)
+
+	// Validate sortOrder is either "ASC" or "DESC"
+	if sortOrderQuery != "ASC" && sortOrderQuery != "DESC" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid sort order value",
 		})
 	}
+
+	// Construct order query
+	orderQuery := fmt.Sprintf("%s %s", sortByQuery, sortOrderQuery)
+
+	// Define default limit
+	const defaultLimit = 10
+
+	// Read query string parameter for limit, use default if not provided
+	limitQuery := c.Query("lt", fmt.Sprint(defaultLimit))
+
+	// Parse query string limit to integer
+	limit, err := strconv.Atoi(limitQuery)
+	if err != nil {
+		// Handle error if limit is not a valid integer
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid limit value",
+		})
+	}
+
+	// Fetch all users with their relations, ordered and limited by the query parameters
+	result := database.DB.Preload(clause.Associations).
+		Omit("password", "CreatedAt", "UpdatedAt", "DeletedAt").
+		Order(orderQuery).
+		Limit(limit).
+		Find(&users)
+	if result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Error fetching users",
+		})
+	}
+
+	// Continue with your handling...
 
 	var userResponses []UserResponse
 	for _, user := range users {
 		userResponse := UserResponse{
 			UserID:  user.ID,
+			Name:   user.Name,   
 			Email:   user.Email,   
 			Address: user.Address, 
 			Photos:  make(map[int]string),
@@ -76,7 +117,7 @@ func GetUserList(c *fiber.Ctx) error {
 			},
 		}
 
-		// Menyusun data foto
+		// Compose photo data
 		for i, photo := range user.Photos {
 			userResponse.Photos[i+1] = photo.Filename
 		}
