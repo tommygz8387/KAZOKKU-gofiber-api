@@ -3,6 +3,7 @@ package database
 import (
 	"log"
 	"os"
+	"v1/app/models"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -41,10 +42,10 @@ func InitDB() (*gorm.DB, error) {
 	db.Logger = logger.Default.LogMode(logger.Info)
 
 	// Auto Migrate
-	// if os.Getenv("DB_AUTO_MIGRATE") == "true" {
-	// 	log.Println("Running AutoMigrations")
-	// 	db.AutoMigrate(&models.User{},&models.UserPhoto{},&models.UserCreditCard{})
-	// }
+	if os.Getenv("DB_AUTO_MIGRATE") == "true" {
+		log.Println("Running AutoMigrations")
+		db.AutoMigrate(&models.User{},&models.UserPhoto{},&models.UserCreditCard{})
+	}
 
 	// Store the database connection globally
 	DB = db

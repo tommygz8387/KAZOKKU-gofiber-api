@@ -1,9 +1,10 @@
+### Get User List
 GET http://localhost:3000/user/list
 
-###
+### Get User By Id
 GET http://localhost:3000/user/1
 
-###
+### Register User
 POST http://localhost:3000/user/register
 Content-Type: application/json
 
@@ -18,4 +19,15 @@ Content-Type: application/json
   "card_name":"bris",
   "card_expired":"-",
   "card_cvv":"211"
+}
+
+
+### Update User
+PATCH  http://localhost:3000/user/1
+Content-Type: application/json
+
+{
+  "name": "user 1",
+  "password": "password",
+  "address": "alamat user1"
 }

@@ -12,6 +12,7 @@ func SetupRoutes(app *fiber.App) {
     // Get All User
     user.Get("/list", controllers.GetUserList)
     user.Get("/:id", controllers.GetUserById)
+    user.Patch("/:id", controllers.UpdateUser)
 
 
     // Registration route
