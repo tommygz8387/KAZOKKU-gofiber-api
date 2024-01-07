@@ -14,32 +14,20 @@ import (
 var DB *gorm.DB
 
 func InitDB() (*gorm.DB, error) {
-    // Load environment variables from .env
-    err := godotenv.Load()
-    if err != nil {
-        panic(err)
-    }
-
-    // Get database configuration from environment variables
-    dbUser := os.Getenv("DB_USER")
-    dbPassword := os.Getenv("DB_PASSWORD")
-    dbHost := os.Getenv("DB_HOST")
-    dbName := os.Getenv("DB_NAME")
 
     // Construct the database DSN
-    dsn := dbUser + ":" + dbPassword + "@tcp(" + dbHost + ":3306)/" + dbName + "?parseTime=true"
+    dsn := Config("DB_USER") + ":" + Config("DB_PASSWORD") + "@tcp(" + Config("DB_HOST") + ":3306)/" + Config("DB_NAME") + "?parseTime=true"
 
     // Initialize database connection
     db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
     if err != nil {
-        panic(err)
+        log.Fatalln("could not connect to database")
     }
 
 	// Running Log
     log.Println("Connected")
-	db.Logger = logger.Default.LogMode(logger.Info)
 
 	// Auto Migrate
 	if os.Getenv("DB_AUTO_MIGRATE") == "true" {
@@ -51,6 +39,15 @@ func InitDB() (*gorm.DB, error) {
 	DB = db
 
     return db, nil
+}
+
+// Config returns the database configuration from the .env file
+func Config(key string) string {
+	// load .env file
+	if err := godotenv.Load(".env"); err != nil {
+		log.Println("Error loading .env file")
+	}
+	return os.Getenv(key)
 }
 
 // CloseDB closes the database connection

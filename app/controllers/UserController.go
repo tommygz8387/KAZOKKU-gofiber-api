@@ -11,82 +11,34 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// UserResponse defines the structure of the user response
-type UserResponse struct {
-	UserID     uint            `json:"user_id"`
-	Name       string          `json:"name"`
-	Email      string          `json:"email"`
-	Address    string          `json:"address"`
-	Photos     map[int]string  `json:"photos"`
-	CreditCard CreditCardInfo  `json:"creditcard"`
-}
-
-// CreditCardInfo defines the structure of the credit card information in the response
-type CreditCardInfo struct {
-	Type    string `json:"type"`
-	Number  string `json:"number"`
-	Name    string `json:"name"`
-	Expired string `json:"expired"`
-	Cvv string `json:"cvv"`
-}
-
-type UpdateUserRequest struct {
-	Name       string `json:"name"`
-	Email      string `json:"email" validate:"email"`
-	Password   string `json:"password" validate:"min=6"`
-	Address    string `json:"address"`
-	Photo      string `json:"photo"`
-	CardType   string `json:"card_type"`
-	CardNumber string `json:"card_number"`
-	CardName   string `json:"card_name"`
-	CardExpired string `json:"card_expired"`
-	CardCVV    string `json:"card_cvv"`
-}
-
-func MaskCreditCardNumber(cardNumber string) string {
-	if len(cardNumber) > 4 {
-		masked := "***" + cardNumber[len(cardNumber)-4:]
-		return masked
-	}
-	return cardNumber
-}
-
 func GetUserList(c *fiber.Ctx) error {
 	var users []models.User
-	// Define default values for sorting
 	const defaultSortBy = "id"
 	const defaultSortOrder = "ASC"
 
-	// Read query string parameters for sorting, use defaults if not provided
 	sortByQuery := c.Query("sb", defaultSortBy)
 	sortOrderQuery := c.Query("ob", defaultSortOrder)
 
-	// Validate sortOrder is either "ASC" or "DESC"
 	if sortOrderQuery != "ASC" && sortOrderQuery != "DESC" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Invalid sort order value",
 		})
 	}
 
-	// Construct order query
 	orderQuery := fmt.Sprintf("%s %s", sortByQuery, sortOrderQuery)
 
-	// Define default limit
 	const defaultLimit = 10
 
-	// Read query string parameter for limit, use default if not provided
 	limitQuery := c.Query("lt", fmt.Sprint(defaultLimit))
 
-	// Parse query string limit to integer
 	limit, err := strconv.Atoi(limitQuery)
 	if err != nil {
-		// Handle error if limit is not a valid integer
+
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Invalid limit value",
 		})
 	}
 
-	// Fetch all users with their relations, ordered and limited by the query parameters
 	result := database.DB.Preload(clause.Associations).
 		Omit("password", "CreatedAt", "UpdatedAt", "DeletedAt").
 		Order(orderQuery).
@@ -97,9 +49,7 @@ func GetUserList(c *fiber.Ctx) error {
 			"message": "Error fetching users",
 		})
 	}
-
-	// Continue with your handling...
-
+	
 	var userResponses []UserResponse
 	for _, user := range users {
 		userResponse := UserResponse{
@@ -117,7 +67,7 @@ func GetUserList(c *fiber.Ctx) error {
 			},
 		}
 
-		// Compose photo data
+
 		for i, photo := range user.Photos {
 			userResponse.Photos[i+1] = photo.Filename
 		}
@@ -141,7 +91,6 @@ func GetUserById(c *fiber.Ctx) error {
 		})
 	}
 	
-	// Prepare the user response
 	userResponse := UserResponse{
 		UserID:  user.ID,
 		Email:   user.Email,
@@ -160,7 +109,6 @@ func GetUserById(c *fiber.Ctx) error {
 		userResponse.Photos[i+1] = photo.Filename
 	}
 
-	// Return the user response
 	return c.JSON(fiber.Map{
 		"user": userResponse,
 	})
@@ -176,7 +124,6 @@ func UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 	
-	// Parse the request body into requestData
 	var requestData UpdateUserRequest
 	if err := c.BodyParser(&requestData); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -184,7 +131,6 @@ func UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Update user fields if provided in the request
 	if requestData.Name != "" {
 		user.Name = requestData.Name
 	}
@@ -204,7 +150,6 @@ func UpdateUser(c *fiber.Ctx) error {
 		user.Password = string(hashedPassword)
 	}
 
-	// Save the updated user to the database
 	saveResult := database.DB.Save(&user)
 	if saveResult.Error != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -212,7 +157,6 @@ func UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Return the updated user information
 	return c.JSON(fiber.Map{
 		"message": "User updated successfully",
 		"user_id": user.ID,
